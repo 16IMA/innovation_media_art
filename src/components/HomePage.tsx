@@ -6,6 +6,7 @@ interface HomePageProps {
   onOpenAbout: () => void;
 }
 
+
 const HomePage = ({ onSelectPost, onOpenAbout }: HomePageProps) => {
   return (
     <div className="bg-white text-slate-900 min-h-screen">
@@ -37,7 +38,7 @@ const HomePage = ({ onSelectPost, onOpenAbout }: HomePageProps) => {
                 <div className="aspect-[16/10] overflow-hidden bg-slate-100 rounded mb-4">
                   <img 
                     alt={post.title} 
-                    src={post.image} 
+                    src={post.images?.[0].url} 
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
                   />
                 </div>

@@ -1,6 +1,6 @@
 // src/components/ArtPostCard.tsx
 import React, { useState, useEffect } from 'react';
-import type { Post } from '../data/posts';
+import type { Post, PostImage } from '../data/posts';
 
 interface ArtPostProps {
   post: Post;
@@ -9,9 +9,13 @@ interface ArtPostProps {
 
 const ArtPostCard: React.FC<ArtPostProps> = ({ post, onBack }) => {
   const [scrollProgress, setScrollProgress] = useState(0);
-  const [isImageExpanded, setIsImageExpanded] = useState(false);
+  
+  // Estado para controlar qué imagen de la galería se visualiza en el modal (pantalla completa)
+  const [activeImageIndex, setActiveImageIndex] = useState<number | null>(null);
 
-  // Cálculo del porcentaje de scroll (el historial lo gestiona App.tsx)
+  const gallery: PostImage[] = post.images || [];
+
+  // Cálculo del porcentaje de scroll de la lectura
   useEffect(() => {
     const handleScroll = () => {
       const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
@@ -25,19 +29,23 @@ const ArtPostCard: React.FC<ArtPostProps> = ({ post, onBack }) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Cierre de la imagen ampliada al presionar la tecla ESC
+  // Controles de teclado para el modal (Esc para cerrar y flechas para navegar en la galería)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (activeImageIndex === null) return;
+
       if (e.key === 'Escape') {
-        setIsImageExpanded(false);
+        setActiveImageIndex(null);
+      } else if (e.key === 'ArrowRight') {
+        setActiveImageIndex((prev) => (prev !== null && prev < gallery.length - 1 ? prev + 1 : 0));
+      } else if (e.key === 'ArrowLeft') {
+        setActiveImageIndex((prev) => (prev !== null && prev > 0 ? prev - 1 : gallery.length - 1));
       }
     };
 
-    if (isImageExpanded) {
-      window.addEventListener('keydown', handleKeyDown);
-    }
+    window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isImageExpanded]);
+  }, [activeImageIndex, gallery.length]);
 
   return (
     <div className="font-body selection:bg-tertiary/20 selection:text-tertiary relative">
@@ -52,7 +60,7 @@ const ArtPostCard: React.FC<ArtPostProps> = ({ post, onBack }) => {
 
       <main className="max-w-5xl mx-auto px-4 md:px-8 pt-8 md:pt-12 pb-40">
         
-        {/* Cabecera con Botón Volver y Porcentaje */}
+        {/* Cabecera con Botón Volver y Porcentaje de lectura */}
         {onBack && (
           <div className="px-0 md:px-20 mb-8 flex justify-between items-center border-b border-outline-variant/20 pb-4">
             <button 
@@ -83,6 +91,7 @@ const ArtPostCard: React.FC<ArtPostProps> = ({ post, onBack }) => {
             </p>
           </header>
 
+          {/* Curator Insight */}
           <div className="relative group">
             <div className="hidden md:flex absolute -left-20 top-0 flex-col items-center gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
               <span className="material-symbols-outlined text-tertiary" style={{ fontVariationSettings: "'FILL' 1" }}>
@@ -106,33 +115,48 @@ const ArtPostCard: React.FC<ArtPostProps> = ({ post, onBack }) => {
             </div>
           </div>
 
-          {/* Imagen Interactiva con Zoom Modal */}
-          {post.image.image && (
-            <div className="py-2 md:py-6">
-              <figure 
-                onClick={() => setIsImageExpanded(true)}
-                className="bg-surface-container-highest w-full aspect-[16/9] md:aspect-[16/7] relative flex items-center justify-center overflow-hidden rounded-sm cursor-zoom-in group"
-              >
-                <img 
-                  src={post.image.image} 
-                  alt={post.title} 
-                  className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-300"
-                />
+          {/* GALERÍA DE IMÁGENES */}
+          {gallery.length > 0 && (
+            <div className="space-y-8 py-2 md:py-6">
+              <div className={`grid gap-6 ${gallery.length > 1 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+                {gallery.map((img, index) => (
+                  <figure key={index} className="space-y-2">
+                    <div 
+                      onClick={() => setActiveImageIndex(index)}
+                      className="bg-surface-container-highest w-full aspect-[16/9] relative flex items-center justify-center overflow-hidden rounded-sm cursor-zoom-in group"
+                    >
+                      <img 
+                        src={img.url} 
+                        alt={img.caption || post.title} 
+                        className="w-full h-full object-cover opacity-90 group-hover:scale-105 transition-transform duration-300"
+                      />
 
-                {/* Botón flotante para sugerir la ampliación */}
-                <div className="absolute top-4 right-4 bg-black/60 backdrop-blur-md text-white p-2 rounded-full opacity-80 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-                  <span className="material-symbols-outlined text-sm">zoom_in</span>
-                </div>
+                      {/* Icono flotante indicador de zoom */}
+                      <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md text-white p-1.5 rounded-full opacity-80 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                        <span className="material-symbols-outlined text-xs">zoom_in</span>
+                      </div>
 
-                {post.watermark && (
-                  <figcaption className="absolute bottom-4 left-4 md:bottom-6 md:left-6 text-[9px] md:text-[10px] font-label uppercase tracking-widest text-white/80 bg-black/50 px-2.5 py-1 rounded-xs backdrop-blur-xs">
-                    {post.watermark}
-                  </figcaption>
-                )}
-              </figure>
+                      {/* Marca de agua / Fotografía por */}
+                      {img.watermark && (
+                        <span className="absolute bottom-3 left-3 text-[9px] font-label uppercase tracking-widest text-white/80 bg-black/50 px-2 py-0.5 rounded-xs backdrop-blur-xs">
+                          {img.watermark}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Título de la obra o Autor de la foto (Caption) */}
+                    {img.caption && (
+                      <figcaption className="text-xs font-label text-outline tracking-wider leading-snug px-1 border-l-2 border-primary/40 pl-3">
+                        {img.caption}
+                      </figcaption>
+                    )}
+                  </figure>
+                ))}
+              </div>
             </div>
           )}
 
+          {/* Texto Principal del Artículo */}
           <div className="space-y-6 md:space-y-8 text-base md:text-lg leading-relaxed font-body font-light text-on-surface whitespace-pre-line">
             {post.content}
           </div>
@@ -157,31 +181,72 @@ const ArtPostCard: React.FC<ArtPostProps> = ({ post, onBack }) => {
 
       </main>
 
-      {/* LIGHTBOX / MODAL DE IMAGEN AMPLIADA */}
-      {isImageExpanded && post.image && (
+      {/* LIGHTBOX / MODAL DE IMAGEN AMPLIADA CON NAVEGACIÓN Y CIERRE POR TOQUE */}
+      {activeImageIndex !== null && gallery[activeImageIndex] && (
         <div 
-          onClick={() => setIsImageExpanded(false)}
-          className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out"
+          onClick={() => setActiveImageIndex(null)}
+          className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-md flex flex-col items-center justify-center p-4 cursor-zoom-out select-none"
         >
-          {/* Botón Cierre */}
+          {/* Botón Cierre rápido en móvil y escritorio */}
           <button 
-            onClick={() => setIsImageExpanded(false)}
-            className="absolute top-6 right-6 text-white/80 hover:text-white bg-black/50 p-2 rounded-full transition-colors cursor-pointer z-[101]"
+            onClick={() => setActiveImageIndex(null)}
+            className="absolute top-6 right-6 text-white/80 hover:text-white bg-black/50 p-2 rounded-full transition-colors cursor-pointer z-[102]"
           >
             <span className="material-symbols-outlined text-2xl">close</span>
           </button>
 
-          {/* Contenedor de la Imagen */}
-          <div className="relative max-w-7xl max-h-[90vh] overflow-hidden rounded-sm">
+          {/* Contenedor de la Imagen y Datos en Pantalla Completa */}
+          <div 
+            onClick={(e) => e.stopPropagation()} 
+            className="relative max-w-6xl max-h-[85vh] flex flex-col items-center justify-center"
+          >
             <img 
-              src={post.image} 
-              alt={post.title} 
-              className="max-w-full max-h-[85vh] object-contain mx-auto"
+              src={gallery[activeImageIndex].url} 
+              alt={gallery[activeImageIndex].caption || post.title} 
+              className="max-w-full max-h-[75vh] object-contain rounded-sm"
             />
-            {post.watermark && (
-              <p className="text-center text-[10px] font-label uppercase tracking-widest text-white/60 mt-3">
-                {post.watermark}
+
+            {/* Pie de foto de la obra en la vista ampliada */}
+            {gallery[activeImageIndex].caption && (
+              <p className="text-center text-xs md:text-sm font-label uppercase tracking-widest text-white/90 mt-4 max-w-2xl px-4">
+                {gallery[activeImageIndex].caption}
               </p>
+            )}
+
+            {/* Marca de agua / Crédito en el modal */}
+            {gallery[activeImageIndex].watermark && (
+              <p className="text-center text-[10px] font-label uppercase tracking-widest text-white/50 mt-1">
+                {gallery[activeImageIndex].watermark}
+              </p>
+            )}
+
+            {/* Flechas y Controles (Si el artículo tiene más de 1 imagen) */}
+            {gallery.length > 1 && (
+              <>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveImageIndex((prev) => (prev !== null && prev > 0 ? prev - 1 : gallery.length - 1));
+                  }}
+                  className="absolute left-[-10px] md:left-[-50px] top-1/2 -translate-y-1/2 text-white/80 hover:text-white bg-black/60 p-3 rounded-full cursor-pointer transition-colors"
+                >
+                  <span className="material-symbols-outlined text-xl">chevron_left</span>
+                </button>
+
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveImageIndex((prev) => (prev !== null && prev < gallery.length - 1 ? prev + 1 : 0));
+                  }}
+                  className="absolute right-[-10px] md:right-[-50px] top-1/2 -translate-y-1/2 text-white/80 hover:text-white bg-black/60 p-3 rounded-full cursor-pointer transition-colors"
+                >
+                  <span className="material-symbols-outlined text-xl">chevron_right</span>
+                </button>
+
+                <span className="absolute -bottom-8 text-[10px] font-label tracking-widest text-white/60">
+                  {activeImageIndex + 1} / {gallery.length}
+                </span>
+              </>
             )}
           </div>
         </div>

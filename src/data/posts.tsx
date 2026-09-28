@@ -14,9 +14,6 @@ export interface Post {
   date: string;
   insight: string;
   
-  // Propiedades opcionales para compatibilidad con publicaciones antiguas
-  image?: string;
-  watermark?: string;
 
   // Nueva propiedad para soportar 1 o más imágenes estructuradas
   images?: PostImage[];
@@ -26,14 +23,24 @@ export const POSTS: Post[] = [
   {
     id: "post-3",
     title: "Infinite Hexadecimal Memory Window (80 x 80 x 15 cm, 1992) – Miguel Chevalier",
-    excerpt: "For a long time, art history books have been embellished with the mythical idea of pure inspiration. Sometimes it appears as a Sibyl, other times as a naked muse—as if inspiration strikes out of nowhere, touched by God, leaving artists as absolute masters of their creation.",
+    excerpt: "Creative ideas never emerge from a vacuum. Discover how Miguel Chevalier’s digital lightboxes echo the optical genius of kinetic master Jesús Soto.",
     date: "2026-09-28",
-    insight: "Equating a billionaire’s wealth to stock fluctuations offers a predictable observation; exploring the real-time market turbulence triggered by a single tweet from figures like Elon Musk would yield a far more potent commentary.",
+    insight: "For a long time, art history books have been embellished with the mythical idea of pure inspiration. Sometimes it appears as a Sibyl, other times as a naked muse—as if inspiration strikes out of nowhere, touched by God, leaving artists as absolute masters of their creation.",
     images: [
       {
-        url: "./1-counter-Galerie-Frey-2o26.jpg",
+        url: "./infinite-hexadecimal-memory-window.jpg",
         caption: "Infinite Hexadecimal Memory Window (1992) – Miguel Chevalier",
-        watermark: "Fotografía de Stefan Zenzmaier"
+        watermark:"",
+      }, 
+      {
+        url: "./etude-pour-une-serie.jpg",
+        caption: "Étude pour une série (1952-53) – Jesús Soto",
+        watermark:"",
+      },
+      {
+        url: "./cajita-villanueva.jpg",
+        caption: "La cajita de Villanueva (1955) – Jesús Soto",
+        watermark:"",
       }
     ],
     content: `Almost everyone believes in the dream of the artistic genius. For a long time, art history books have been embellished with the mythical idea of pure inspiration. Sometimes it appears as a Sibyl, other times as a naked muse—as if inspiration strikes out of nowhere, touched by God, leaving artists as absolute masters of their creation. Since the Cinquecento, artists sought to claim their place in the emerging bourgeoisie, distancing themselves from mere artisans. Being an artist evolved into representing someone who works more with their head than their hands. Consequently, the aura of genius allowed artists to enjoy the privileges of high society.
