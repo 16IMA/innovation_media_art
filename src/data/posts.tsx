@@ -16,7 +16,7 @@ export interface Post {
   
 
   // Nueva propiedad para soportar 1 o más imágenes estructuradas
-  images?: PostImage[];
+  images: PostImage[];
 }
 
 export const POSTS: Post[] = [
